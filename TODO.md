@@ -7,22 +7,23 @@
 ---
 
 ## Current Status Checkpoint
-- **Active Milestone:** Milestone 1 (Repo Scaffolding & Schema Design)
-- **Current Sub-task:** Concept verification & schema definition (`EmailObservable`, `DetectionFinding`)
-- **Next Resume Action:** Answer concept question, then implement `src/phish_signal/schemas/observable.py` and `src/phish_signal/schemas/finding.py`.
-- **Last Updated:** Sprint Day 1
+- **Active Milestone:** Milestone 2 (The DNS & Spoofing Posture Analyzer)
+- **Current Sub-task:** Concept verification: SPF `~all`/`-all` vs DMARC `p=none`/`p=quarantine`/`p=reject`
+- **Next Resume Action:** Answer Milestone 2 verification question, then implement `src/phish_signal/analyzers/dns_posture.py`.
+- **Last Updated:** 2026-11-13 (Milestone 1 Complete, 14/14 tests passing)
 
 ---
 
 ## 45–60 Minute Sprint Roadmap
 
-### [ ] Milestone 1: Repo Scaffolding & Schema Design
+### [x] Milestone 1: Repo Scaffolding & Schema Design
 - [x] Directory scaffolding (`src/`, `tests/`, `docs/`)
 - [x] Initial `requirements.txt` and `TODO.md` checkpoint setup
-- [ ] Verification Question: Schema vs. Analyzer decoupling
-- [ ] Implement `src/phish_signal/schemas/observable.py` (`EmailObservable`, strict validation)
-- [ ] Implement `src/phish_signal/schemas/finding.py` (`DetectionFinding`, ECS & MITRE ATT&CK mapping)
-- [ ] Update `README.md` and log entry in `docs/ENGINEERING_LOG.md`
+- [x] Verification Question: Schema vs. Analyzer decoupling (Answered)
+- [x] Implement `src/phish_signal/schemas/observable.py` (`EmailObservable`, strict validation)
+- [x] Implement `src/phish_signal/schemas/finding.py` (`DetectionFinding`, ECS & MITRE ATT&CK mapping)
+- [x] Unit test suite (`tests/test_schemas.py` — 14/14 tests passing)
+- [x] Update `README.md` and log entry in `docs/ENGINEERING_LOG.md`
 
 ### [ ] Milestone 2: DNS & Spoofing Posture Analyzer (`omniel.com.ng` Logic)
 - [ ] Concept verification: SPF `~all` / `-all` vs. DMARC `p=none` / `p=quarantine` / `p=reject`
