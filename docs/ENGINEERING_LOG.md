@@ -1,31 +1,24 @@
 # Engineering Log: `phish-signal-interceptor`
 
-This document records architectural decisions, engineering rationales, and triage trade-offs made during each milestone. Every milestone adds exactly one 3-bullet entry following the structure below.
+This document records the real engineering decisions, mistakes, and solutions made during each milestone. Every milestone has a simple 3-bullet entry explaining what was built, why we made that choice, and how we avoided false alarms.
 
 ---
 
 ## Log Entries
 
-### [2026-11-12] Setup: GitHub Authentication — Password Auth Deprecated
-- **Problem:** `git push` kept returning `remote: Invalid username or token. Password authentication is not supported for Git operations.` even after confirming the password was correct and freshly changed.
-- **Root Cause:** GitHub permanently disabled password-based authentication for Git operations in **August 2021** (after a security incident). All Git CLI operations now require a **Personal Access Token (PAT)** instead of your account password. This is not a bug — it's a deliberate security hardening decision by GitHub.
-- **Resolution:** Generated a classic PAT at `github.com/settings/tokens` with `repo` scope, used it as the password during `git push`, then ran `git config --global credential.helper store` to cache it locally. Lesson: always check the _error message text carefully_ — it literally says "Password authentication is not supported," which tells you exactly what's wrong.
+### [2026-11-12] Setup: Fixing GitHub Password Authentication
+- **Problem:** When trying to push code with `git push`, GitHub kept failing with `Password authentication is not supported for Git operations`, even after resetting the password.
+- **Root Cause:** GitHub stopped accepting account passwords for terminal Git operations in August 2021. You have to use a Personal Access Token (PAT) instead.
+- **Resolution:** Created a personal access token with repo permissions under GitHub Developer Settings, used that token as the password, and cached it with `git config credential.helper store`.
 
-### [2026-11-13] Milestone 1: Typed Schema Contracts & Decoupled Architecture
-- **What We Built:** Implemented `EmailObservable` (RFC 5322/5321 input schema), `DetectionFinding` (standardized analyzer finding output schema mapped to MITRE ATT&CK T1566), `TriageResult` (composite risk aggregation), and 14 unit tests in `tests/test_schemas.py` (100% passing).
-- **Why We Designed It This Way:** Decoupled schemas from analyzer modules (mirroring IntelOwl's observable/analyzer boundary and Forta bot contracts) so downstream SIEM exporters and triage matrices never break when new analyzers are plugged in. Enforced immutable, frozen models (`EmailObservable`) so parallel analyzers cannot mutate shared email state.
-- **How We Handled False Positives / Incomplete Data:** Transport headers (`return_path`, `message_id`, `reply_to`) are typed as `str | None` with safe defaults; missing headers do not crash ingestion, allowing analyzers to evaluate them as potential spoofing signals. Confidence scores are strictly clamped to `[0.0, 1.0]` to prevent single aberrant heuristics from skewing the composite scoring matrix.
+### [2026-11-13] Milestone 1: Building the Input & Output Data Schemas
+- **What We Built:** Created `EmailObservable` (the model that holds incoming email data) and `DetectionFinding` (the standard format for alerts) using Pydantic, backed by 14 unit tests in `tests/test_schemas.py`.
+- **Why We Designed It This Way:** We separated the data format from the analyzer logic (the same way IntelOwl and Forta do). This means new contributors can write new detection checks without touching or breaking our alert system. We also locked the email data as read-only (`frozen=True`) so no analyzer can accidentally edit or contaminate the original email evidence.
+- **How We Handled Incomplete Data & Edge Cases:** If an email is missing headers like `Return-Path` or `Reply-To`, we set them to `None` instead of crashing. This lets our analyzers see that a header is missing and decide if that looks suspicious. We also limited confidence scores strictly between 0.0 and 1.0 so no single test can throw off the overall risk score.
 
-### [2026-11-14] Milestone 2: DNS & Spoofing Posture Analyzer (omniel.com.ng Vulnerability Detection)
-- **What We Built:** Implemented `DNSPostureAnalyzer` (`src/phish_signal/analyzers/dns_posture.py`) utilizing `dnspython` to audit MX records, SPF policies (`parse_spf_qualifier`), and DMARC policies (`parse_dmarc_policy`). Added 15 unit and integration tests with mocked DNS fixtures (`tests/test_dns_posture.py`), bringing our test suite to 29/29 passing tests.
-- **Why We Designed It This Way:** Rather than running fragile subprocess shell commands (`dig` or `nslookup`), we used pure Python DNS resolvers with configurable timeouts (3.0s) and dependency-injected resolvers to allow fast, deterministic unit testing without live network calls. The analyzer specifically targets the compound configuration flaw: SPF SoftFail (`~all`) paired with DMARC `p=none`/missing.
-- **How We Handled False Positives / Edge Cases:** Handled RFC DNS exceptions (`NXDOMAIN`, `NoAnswer`, `NoNameservers`, multi-chunk TXT records) gracefully by returning empty record sets instead of crashing the pipeline. Hardened domains (`-all` + `p=reject`) produce zero false-positive findings, while unconfigured domains without MX or SPF records generate distinct, explainable findings with calibrated confidence scores (0.70 to 0.90).
+### [2026-11-14] Milestone 2: DNS & Spoofing Posture Analyzer (Detecting the omniel.com.ng Flaw)
+- **What We Built:** Built `DNSPostureAnalyzer` (`src/phish_signal/analyzers/dns_posture.py`) using `dnspython`. It looks up a domain's MX, SPF, and DMARC records to catch email spoofing vulnerabilities. Added 15 new tests in `tests/test_dns_posture.py` (total 29/29 tests passing).
+- **Why We Designed It This Way:** We used a Python DNS library (`dnspython`) instead of running terminal commands like `dig` so the code works cleanly on any operating system. We built it to accept mock DNS answers during tests, which means our automated tests run in less than half a second without needing an active internet connection.
+- **How We Handled Incomplete Data & Edge Cases:** If a domain has no DNS records or the lookup times out, our code catches the error and returns an empty list instead of crashing the program. A secure domain with strict SPF (`-all`) and DMARC (`reject`) produces zero warnings (no false positives), while a domain using SoftFail (`~all`) with DMARC `none` (like `omniel.com.ng`) correctly triggers a high-severity warning because unauthorized emails will land right in the user's inbox.
 
 *(More entries will be appended here as each milestone is completed)*
-
-<!--
-### [YYYY-MM-DD] Milestone N: <Title>
-- **What We Built:** Brief description of modules and functionality implemented.
-- **Why We Designed It This Way:** Architectural rationale (e.g., decoupling, typing, standards compliance).
-- **How We Handled False Positives / Edge Cases:** Defenses against incomplete data, missing records, or false triggers.
--->
