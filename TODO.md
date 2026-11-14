@@ -7,10 +7,10 @@
 ---
 
 ## Current Status Checkpoint
-- **Active Milestone:** Milestone 2 (The DNS & Spoofing Posture Analyzer)
-- **Current Sub-task:** Concept verification: SPF `~all`/`-all` vs DMARC `p=none`/`p=quarantine`/`p=reject`
-- **Next Resume Action:** Answer Milestone 2 verification question, then implement `src/phish_signal/analyzers/dns_posture.py`.
-- **Last Updated:** 2026-11-13 (Milestone 1 Complete, 14/14 tests passing)
+- **Active Milestone:** Milestone 3 (The RFC Header & Payload/URL Analyzer)
+- **Current Sub-task:** Concept verification: RFC 5322 `From:` vs RFC 5321 `Return-Path` & hop validation
+- **Next Resume Action:** Answer Milestone 3 verification question, then implement `src/phish_signal/analyzers/header_analyzer.py`.
+- **Last Updated:** 2026-11-14 (Milestone 2 Complete, 29/29 tests passing)
 
 ---
 
@@ -25,11 +25,13 @@
 - [x] Unit test suite (`tests/test_schemas.py` — 14/14 tests passing)
 - [x] Update `README.md` and log entry in `docs/ENGINEERING_LOG.md`
 
-### [ ] Milestone 2: DNS & Spoofing Posture Analyzer (`omniel.com.ng` Logic)
-- [ ] Concept verification: SPF `~all` / `-all` vs. DMARC `p=none` / `p=quarantine` / `p=reject`
-- [ ] Implement `src/phish_signal/analyzers/dns_posture.py` using `dnspython`
-- [ ] Unit tests for DNS posture with mock DNS answers (`tests/test_dns_posture.py`)
-- [ ] Documentation update in `README.md` & `ENGINEERING_LOG.md`
+### [x] Milestone 2: DNS & Spoofing Posture Analyzer (`omniel.com.ng` Logic)
+- [x] Concept verification: SPF `~all` / `-all` vs. DMARC `p=none` / `p=quarantine` / `p=reject` (Answered)
+- [x] Implement `extract_domain`, `parse_spf_qualifier`, `parse_dmarc_policy`
+- [x] Implement `src/phish_signal/analyzers/dns_posture.py` using `dnspython`
+- [x] Unit tests for DNS posture with mock DNS answers (`tests/test_dns_posture.py` — 15 tests, all passing)
+- [x] Total suite: 29/29 tests passing (100% pass rate)
+- [x] Documentation update in `README.md` & `ENGINEERING_LOG.md`
 
 ### [ ] Milestone 3: RFC Header & Payload/URL Analyzer
 - [ ] Concept verification: RFC 5322 `From:` vs RFC 5321 `Return-Path` & hop validation

@@ -16,6 +16,11 @@ This document records architectural decisions, engineering rationales, and triag
 - **Why We Designed It This Way:** Decoupled schemas from analyzer modules (mirroring IntelOwl's observable/analyzer boundary and Forta bot contracts) so downstream SIEM exporters and triage matrices never break when new analyzers are plugged in. Enforced immutable, frozen models (`EmailObservable`) so parallel analyzers cannot mutate shared email state.
 - **How We Handled False Positives / Incomplete Data:** Transport headers (`return_path`, `message_id`, `reply_to`) are typed as `str | None` with safe defaults; missing headers do not crash ingestion, allowing analyzers to evaluate them as potential spoofing signals. Confidence scores are strictly clamped to `[0.0, 1.0]` to prevent single aberrant heuristics from skewing the composite scoring matrix.
 
+### [2026-11-14] Milestone 2: DNS & Spoofing Posture Analyzer (omniel.com.ng Vulnerability Detection)
+- **What We Built:** Implemented `DNSPostureAnalyzer` (`src/phish_signal/analyzers/dns_posture.py`) utilizing `dnspython` to audit MX records, SPF policies (`parse_spf_qualifier`), and DMARC policies (`parse_dmarc_policy`). Added 15 unit and integration tests with mocked DNS fixtures (`tests/test_dns_posture.py`), bringing our test suite to 29/29 passing tests.
+- **Why We Designed It This Way:** Rather than running fragile subprocess shell commands (`dig` or `nslookup`), we used pure Python DNS resolvers with configurable timeouts (3.0s) and dependency-injected resolvers to allow fast, deterministic unit testing without live network calls. The analyzer specifically targets the compound configuration flaw: SPF SoftFail (`~all`) paired with DMARC `p=none`/missing.
+- **How We Handled False Positives / Edge Cases:** Handled RFC DNS exceptions (`NXDOMAIN`, `NoAnswer`, `NoNameservers`, multi-chunk TXT records) gracefully by returning empty record sets instead of crashing the pipeline. Hardened domains (`-all` + `p=reject`) produce zero false-positive findings, while unconfigured domains without MX or SPF records generate distinct, explainable findings with calibrated confidence scores (0.70 to 0.90).
+
 *(More entries will be appended here as each milestone is completed)*
 
 <!--

@@ -92,3 +92,61 @@ phish-signal-interceptor/
 - **Protocol Alignment Checking:** Flags discrepancies between RFC 5322 human-facing `From:` headers and RFC 5321 envelope `Return-Path` addresses.
 - **Deterministic Alert Scoring:** Minimizes false positives by calculating multi-vector risk scores rather than single-heuristic alarms.
 - **SIEM-Native Format:** Emits structured JSON alerts enriched with MITRE ATT&CK tactics (`T1566.001`, `T1566.002`) ready for Wazuh rules or Elastic SIEM ingestion.
+
+---
+
+## Milestone 2: DNS & Spoofing Posture Analyzer
+
+The `DNSPostureAnalyzer` evaluates whether an incoming email sender domain leaves recipients defenseless against spoofing attacks due to misconfigured DNS records.
+
+### The Compound Spoofing Flaw (`omniel.com.ng` Logic)
+
+```mermaid
+flowchart TD
+    DNS["Sender Domain: omniel.com.ng"] --> SPF["SPF: v=spf1 include:_spf.google.com ~all"]
+    DNS --> DMARC["DMARC: v=DMARC1; p=none; ..."]
+    SPF --> EVAL{"Posture Evaluation"}
+    DMARC --> EVAL
+    EVAL -->|~all SoftFail + p=none| FLAG["EXPLOITABLE_POSTURE<br/>Severity: HIGH | Confidence: 0.90<br/>MITRE ATT&CK: T1566.002"]
+```
+
+When a domain configures `SPF ~all` (SoftFail) and pairs it with `DMARC p=none` (or completely omits DMARC), receiving mail transfer agents (MTAs) like Gmail or Microsoft 365 will **NOT** reject or quarantine spoofed messages. The attacker's unauthorized mail drops straight into the victim's primary inbox.
+
+### Example Analyzer Usage
+
+```python
+from phish_signal.analyzers import DNSPostureAnalyzer
+from phish_signal.schemas import EmailObservable
+
+analyzer = DNSPostureAnalyzer()
+
+observable = EmailObservable(
+    sender_address="accounts@omniel.com.ng",
+    recipient_address="victim@enterprise.com",
+    subject="Wire Transfer Instructions",
+)
+
+findings = analyzer.analyze(observable)
+for finding in findings:
+    print(finding.model_dump_json(indent=2))
+```
+
+### Emitted Finding (JSON Output)
+
+```json
+{
+  "analyzer_id": "dns_posture",
+  "title": "Exploitable Spoofing Posture (SPF SoftFail with DMARC p=none)",
+  "description": "Domain 'omniel.com.ng' has SPF set to '~all' but DMARC policy is 'none'. Because neither protocol instructs the receiving server to reject or quarantine unauthorized senders, spoofed emails will land directly in the victim's primary inbox.",
+  "severity": "high",
+  "confidence": 0.9,
+  "mitre_technique_id": "T1566.002",
+  "evidence": {
+    "domain": "omniel.com.ng",
+    "spf_record": "v=spf1 include:_spf.google.com ~all",
+    "spf_qualifier": "~all",
+    "dmarc_policy": "none"
+  },
+  "timestamp": "2026-11-14T10:15:00Z"
+}
+```
