@@ -7,10 +7,10 @@
 ---
 
 ## Current Status Checkpoint
-- **Active Milestone:** Milestone 3 (The RFC Header & Payload/URL Analyzer)
-- **Current Sub-task:** Concept verification: RFC 5322 `From:` vs RFC 5321 `Return-Path` & hop validation
-- **Next Resume Action:** Answer Milestone 3 verification question, then implement `src/phish_signal/analyzers/header_analyzer.py`.
-- **Last Updated:** 2026-11-14 (Milestone 2 Complete, 29/29 tests passing)
+- **Active Milestone:** Milestone 4 (The Triage Engine & Wazuh/ECS Alert Reporter)
+- **Current Sub-task:** Implement triage scoring matrix and Wazuh-compatible JSON alert exporter
+- **Next Resume Action:** Implement `src/phish_signal/engine/triage.py` and `src/phish_signal/reporters/wazuh_ecs.py`.
+- **Last Updated:** 2026-11-15 (Milestone 3 Complete, 40/40 tests passing)
 
 ---
 
@@ -33,7 +33,15 @@
 - [x] Total suite: 29/29 tests passing (100% pass rate)
 - [x] Documentation update in `README.md` & `ENGINEERING_LOG.md`
 
-### [ ] Milestone 3: RFC Header & Payload/URL Analyzer
+### [x] Milestone 3: RFC Header & Payload/URL Analyzer
+- [x] Concept verification: RFC 5322 `From:` vs RFC 5321 `Return-Path` & bounce routing (Answered)
+- [x] Implement `check_domain_alignment`, `is_naked_ip_url`, `detect_display_name_deception`
+- [x] Implement `src/phish_signal/analyzers/header_analyzer.py`
+- [x] Unit tests in `tests/test_header_analyzer.py` (11 tests, all passing)
+- [x] Total suite: 40/40 tests passing (100% pass rate)
+- [x] Documentation update in `README.md` & `ENGINEERING_LOG.md`
+
+### [ ] Milestone 4: Triage Engine & Wazuh/ECS Alert Output
 - [ ] Concept verification: RFC 5322 `From:` vs RFC 5321 `Return-Path` & hop validation
 - [ ] Implement `src/phish_signal/analyzers/header_analyzer.py`
 - [ ] Implement URL and domain extraction heuristics

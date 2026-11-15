@@ -150,3 +150,43 @@ for finding in findings:
   "timestamp": "2026-11-14T10:15:00Z"
 }
 ```
+
+---
+
+## Milestone 3: RFC Header & Payload/URL Analyzer
+
+The `HeaderPayloadAnalyzer` inspects email transport headers and body hyperlinks to catch brand impersonation and evasion tactics.
+
+### Detection Heuristics
+
+```mermaid
+flowchart TD
+    OBS["EmailObservable"] --> H1["From vs Return-Path Mismatch<br/>(RFC 5322 vs RFC 5321)"]
+    OBS --> H2["Display Name Brand Impersonation<br/>('PayPal Support' from evil.com)"]
+    OBS --> H3["Naked IP Hyperlink in Body<br/>(http://185.220.101.5/login)"]
+    H1 --> FINDINGS["DetectionFindings[]"]
+    H2 --> FINDINGS
+    H3 --> FINDINGS
+```
+
+### Example Analyzer Usage
+
+```python
+from phish_signal.analyzers import HeaderPayloadAnalyzer
+from phish_signal.schemas import EmailObservable
+
+analyzer = HeaderPayloadAnalyzer()
+
+observable = EmailObservable(
+    sender_address="alerts@evil-mailer.net",
+    sender_display_name="Chase Fraud Department",
+    return_path="bounces@another-spoofer.xyz",
+    recipient_address="victim@target.com",
+    subject="Urgent: Unauthorized Login Detected",
+    urls_extracted=["http://198.51.100.44/chase/login.php"],
+)
+
+findings = analyzer.analyze(observable)
+for finding in findings:
+    print(finding.model_dump_json(indent=2))
+```
